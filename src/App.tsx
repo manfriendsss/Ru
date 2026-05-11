@@ -14,7 +14,12 @@ import {
   X,
   BookA,
   Library,
-  ArrowRight
+  ArrowRight,
+  Hash,
+  Navigation,
+  AlertTriangle,
+  Plane,
+  Hotel
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES, ALPHABET, DICTIONARY, type Category, type Phrase } from './data';
@@ -27,7 +32,12 @@ const iconMap: Record<string, any> = {
   ShoppingCart,
   HandHelping,
   Heart,
-  ShieldCheck
+  ShieldCheck,
+  Hash,
+  Navigation,
+  AlertTriangle,
+  Plane,
+  Hotel
 };
 
 export default function App() {
