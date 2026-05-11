@@ -285,6 +285,7 @@ export default function App() {
                           <span className="font-bold text-gray-900 text-lg">{entry.ru}</span>
                           <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black uppercase">{entry.type}</span>
                         </div>
+                        <span className="text-[10px] text-[#0039A6] font-bold italic block mb-0.5 opacity-70">/{entry.pron}/</span>
                         <span className="text-sm text-gray-600 font-bold">{entry.vi}</span>
                       </div>
                       <button 
