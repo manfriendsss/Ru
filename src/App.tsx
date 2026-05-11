@@ -19,7 +19,8 @@ import {
   Navigation,
   AlertTriangle,
   Plane,
-  Hotel
+  Hotel,
+  Building
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES, ALPHABET, DICTIONARY, type Category, type Phrase } from './data';
@@ -37,7 +38,8 @@ const iconMap: Record<string, any> = {
   Navigation,
   AlertTriangle,
   Plane,
-  Hotel
+  Hotel,
+  Building
 };
 
 export default function App() {
@@ -49,12 +51,30 @@ export default function App() {
   // Auto-set the "Tech" category if user wants to see their specialty quickly
   const techCategory = useMemo(() => CATEGORIES.find(c => c.id === 'tech'), []);
 
+  useEffect(() => {
+    // Hint browser to load voices
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+    }
+  }, []);
+
   const speak = (text: string) => {
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ru-RU';
-      utterance.rate = 0.9;
-      window.speechSynthesis.cancel();
+      
+      // Try to find a high-quality Russian voice
+      const voices = window.speechSynthesis.getVoices();
+      const russianVoice = voices.find(v => v.lang.toLowerCase().includes('ru')) || 
+                           voices.find(v => v.lang.toLowerCase().includes('ru_ru'));
+      
+      if (russianVoice) {
+        utterance.voice = russianVoice;
+      }
+      
+      utterance.rate = 0.85; // Slightly slower for clarity
+      utterance.pitch = 1;
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -325,7 +345,12 @@ export default function App() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.02 }}
                     className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center text-center cursor-pointer active:bg-blue-50 hover:border-blue-100 transition-all group"
-                    onClick={() => speak(item.letter.split(' ')[0])}
+                    onClick={() => {
+                      const letter = item.letter.split(' ')[0];
+                      if (letter !== 'Ъ' && letter !== 'Ь') {
+                        speak(letter);
+                      }
+                    }}
                   >
                     <span className="text-3xl font-black text-[#0039A6] mb-1 group-hover:scale-110 transition-transform">{item.letter}</span>
                     <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">/{item.name}/</span>
