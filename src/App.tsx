@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   Plane,
   Hotel,
-  Building
+  Building,
+  ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES, ALPHABET, DICTIONARY, type Category, type Phrase } from './data';
@@ -39,7 +40,8 @@ const iconMap: Record<string, any> = {
   AlertTriangle,
   Plane,
   Hotel,
-  Building
+  Building,
+  ShieldAlert
 };
 
 export default function App() {
@@ -113,11 +115,20 @@ export default function App() {
 
         {/* Header - Not sticky anymore */}
         <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10 transition-transform">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#0039A6] rounded-lg flex items-center justify-center text-white font-black text-lg shadow-sm">
-              RU
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-8 relative rounded-md border border-gray-100 overflow-hidden shadow-sm flex flex-col">
+              <div className="flex-1 bg-white"></div>
+              <div className="flex-1 bg-[#0039A6]"></div>
+              <div className="flex-1 bg-[#D52B1E]"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-base font-black text-white mix-blend-difference">RU</span>
+              </div>
             </div>
-            <h1 className="text-xl font-extrabold tracking-tight text-[#0039A6]">Chào Nga</h1>
+            <h1 className="text-xl font-black tracking-tight flex items-center">
+              <span className="text-gray-400">Tiếng</span>
+              <span className="text-[#0039A6] mx-1">Nga</span>
+              <span className="text-[#D52B1E]">Vỡ Lòng</span>
+            </h1>
           </div>
         </header>
 
