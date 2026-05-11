@@ -46,12 +46,34 @@ const iconMap: Record<string, any> = {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'alphabet' | 'dictionary'>('home');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | 'fav' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [dictSearchQuery, setDictSearchQuery] = useState('');
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ru_favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Auto-set the "Tech" category if user wants to see their specialty quickly
   const techCategory = useMemo(() => CATEGORIES.find(c => c.id === 'tech'), []);
+
+  useEffect(() => {
+    localStorage.setItem('ru_favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const toggleFavorite = (ru: string) => {
+    setFavorites(prev => 
+      prev.includes(ru) ? prev.filter(f => f !== ru) : [...prev, ru]
+    );
+  };
+
+  const allPhrases = useMemo(() => {
+    return CATEGORIES.flatMap(cat => cat.phrases.map(p => ({ ...p, categoryId: cat.id, categoryTitle: cat.title })));
+  }, []);
+
+  const favoritePhrases = useMemo(() => {
+    return allPhrases.filter(p => favorites.includes(p.ru));
+  }, [favorites, allPhrases]);
 
   useEffect(() => {
     // Hint browser to load voices
@@ -80,10 +102,6 @@ export default function App() {
       window.speechSynthesis.speak(utterance);
     }
   };
-
-  const allPhrases = useMemo(() => {
-    return CATEGORIES.flatMap(cat => cat.phrases.map(p => ({ ...p, categoryId: cat.id, categoryTitle: cat.title })));
-  }, []);
 
   const filteredPhrases = useMemo(() => {
     if (!searchQuery) return [];
@@ -114,22 +132,31 @@ export default function App() {
         </div>
 
         {/* Header - Not sticky anymore */}
-        <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10 transition-transform">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-8 relative rounded-md border border-gray-100 overflow-hidden shadow-sm flex flex-col">
-              <div className="flex-1 bg-white"></div>
-              <div className="flex-1 bg-[#0039A6]"></div>
-              <div className="flex-1 bg-[#D52B1E]"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-base font-black text-white mix-blend-difference">RU</span>
+        <header className="bg-white border-b border-gray-100 px-6 py-4 flex flex-col gap-4 z-10 transition-transform">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-8 relative rounded-md border border-gray-100 overflow-hidden shadow-sm flex flex-col">
+                <div className="flex-1 bg-white"></div>
+                <div className="flex-1 bg-[#0039A6]"></div>
+                <div className="flex-1 bg-[#D52B1E]"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-base font-black text-white mix-blend-difference">RU</span>
+                </div>
               </div>
+              <h1 className="text-xl font-black tracking-tight flex items-center">
+                <span className="text-gray-400">Tiếng</span>
+                <span className="text-[#0039A6] mx-1">Nga</span>
+                <span className="text-[#D52B1E]">Vỡ Lòng</span>
+              </h1>
             </div>
-            <h1 className="text-xl font-black tracking-tight flex items-center">
-              <span className="text-gray-400">Tiếng</span>
-              <span className="text-[#0039A6] mx-1">Nga</span>
-              <span className="text-[#D52B1E]">Vỡ Lòng</span>
-            </h1>
+            <button 
+              onClick={() => setSelectedCategory("fav")}
+              className={`p-2 rounded-full transition-colors ${selectedCategory === "fav" ? 'bg-red-50 text-red-500' : 'text-gray-400 hover:bg-gray-50'}`}
+            >
+              <Heart className={`w-6 h-6 ${selectedCategory === "fav" ? 'fill-current' : ''}`} />
+            </button>
           </div>
+
         </header>
 
         <div className="px-4 pt-4">
@@ -179,13 +206,71 @@ export default function App() {
                   </div>
                   {filteredPhrases.length > 0 ? (
                     filteredPhrases.map((phrase, idx) => (
-                      <PhraseCard key={idx} phrase={phrase} onSpeak={() => speak(phrase.ru)} />
+                      <PhraseCard 
+                        key={idx} 
+                        phrase={phrase} 
+                        onSpeak={() => speak(phrase.ru)} 
+                        isFavorite={favorites.includes(phrase.ru)}
+                        onToggleFavorite={() => toggleFavorite(phrase.ru)}
+                      />
                     ))
                   ) : (
                     <div className="text-center py-10 text-gray-400 italic">
                       Không tìm thấy câu nào phù hợp...
                     </div>
                   )}
+                </motion.div>
+              ) : selectedCategory === 'fav' ? (
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <button 
+                      onClick={() => setSelectedCategory(null)}
+                      className="flex items-center gap-1.5 text-xs font-black text-[#D52B1E] uppercase tracking-widest hover:opacity-80 transition-opacity"
+                    >
+                      <X size={14} strokeWidth={3} /> Quay lại
+                    </button>
+                    {favorites.length > 0 && (
+                      <button 
+                        onClick={() => {
+                          if (confirm('Xóa tất cả mục yêu thích?')) setFavorites([]);
+                        }}
+                        className="text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                      >
+                        Xóa tất cả
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="p-4 bg-red-500 rounded-2xl text-white shadow-md">
+                      <Heart size={28} fill="currentColor" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-gray-900 tracking-tight">Mục yêu thích</h2>
+                      <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">{favoritePhrases.length} câu đã lưu</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {favoritePhrases.length > 0 ? (
+                      favoritePhrases.map((phrase, idx) => (
+                        <PhraseCard 
+                          key={idx} 
+                          phrase={phrase} 
+                          onSpeak={() => speak(phrase.ru)} 
+                          isFavorite={true}
+                          onToggleFavorite={() => toggleFavorite(phrase.ru)}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-20 text-gray-300 italic">
+                        Chưa có câu nào được lưu...
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
               ) : !selectedCategory ? (
                 <>
@@ -259,7 +344,13 @@ export default function App() {
 
                   <div className="space-y-4">
                     {selectedCategory.phrases.map((phrase, idx) => (
-                      <PhraseCard key={idx} phrase={phrase} onSpeak={() => speak(phrase.ru)} />
+                      <PhraseCard 
+                        key={idx} 
+                        phrase={phrase} 
+                        onSpeak={() => speak(phrase.ru)} 
+                        isFavorite={favorites.includes(phrase.ru)}
+                        onToggleFavorite={() => toggleFavorite(phrase.ru)}
+                      />
                     ))}
                   </div>
                 </motion.div>
@@ -400,7 +491,7 @@ export default function App() {
   );
 }
 
-function PhraseCard({ phrase, onSpeak }: { phrase: any, onSpeak: () => void, key?: any }) {
+function PhraseCard({ phrase, onSpeak, isFavorite, onToggleFavorite }: { phrase: any, onSpeak: () => void, isFavorite: boolean, onToggleFavorite: () => void }) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -412,12 +503,20 @@ function PhraseCard({ phrase, onSpeak }: { phrase: any, onSpeak: () => void, key
         <p className="text-[11px] text-[#0039A6] font-bold italic mb-2 tracking-wide uppercase opacity-70">/{phrase.pron}/</p>
         <p className="text-sm text-gray-600 font-bold leading-relaxed">{phrase.vi}</p>
       </div>
-      <button 
-        onClick={onSpeak}
-        className="w-12 h-12 rounded-2xl bg-gray-50 text-[#0039A6] flex items-center justify-center hover:bg-[#D52B1E] hover:text-white transition-all shadow-sm active:scale-90"
-      >
-        <Volume2 size={22} />
-      </button>
+      <div className="flex flex-col gap-2">
+        <button 
+          onClick={onSpeak}
+          className="w-10 h-10 rounded-xl bg-gray-50 text-[#0039A6] flex items-center justify-center hover:bg-[#0039A6] hover:text-white transition-all shadow-sm active:scale-90"
+        >
+          <Volume2 size={20} />
+        </button>
+        <button 
+          onClick={onToggleFavorite}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isFavorite ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-gray-50 text-gray-300 hover:text-red-400'}`}
+        >
+          <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
+        </button>
+      </div>
     </motion.div>
   );
 }
